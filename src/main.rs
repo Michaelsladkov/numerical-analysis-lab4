@@ -1,11 +1,12 @@
 pub mod interpolator;
-pub mod points;
 pub mod my_io;
 pub mod plotter;
+pub mod points;
 
-use points::Point;
 use points::Clearness::NOISY;
 use std::env;
+
+const NOISE_LEVEL: f64 = 0.01;
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
@@ -20,6 +21,8 @@ fn main() {
         "y = sin(2x) + 3x",
     ));
     funcs.push((|x: f64| -> f64 { x.sqrt() }, "y = sqrt(x)"));
+    funcs.push((|x: f64| -> f64 {x.sin()}, "y = sin(x)"));
+    funcs.push((|x: f64| -> f64 {x.exp()}, "y = e^x"));
 
     println!("Select one of these functions: ");
     my_io::print_funcs(&funcs, 1);
@@ -27,17 +30,37 @@ fn main() {
     let selected_func_index = my_io::get_index(Some(funcs.len())) - 1;
     let selected_func = funcs[selected_func_index];
 
-    let mut test_set: Vec<Point> = Vec::new();
-    test_set.push((0f64, 0f64));
-    test_set.push((1f64, 1f64));
-    test_set.push((2f64, 4f64));
-    let test_set = points::create_set(selected_func.0, 0f64, 10f64, 10, NOISY);
+    println!("Enter left interpolation border:");
+    let a = my_io::get_double();
+    println!("Enter right interpolation border:");
+    let b = my_io::get_double();
+    println!("Enter number of points:");
+    let number_of_points = my_io::get_index(None);
+
+    let test_set = points::create_set(
+        selected_func.0,
+        a,
+        b,
+        number_of_points as u32,
+        NOISY(NOISE_LEVEL),
+    );
+    let test_set = match test_set {
+        Ok(set) => set,
+        Err(msg) => {
+            println!("Failed to create point set");
+            println!("{}", msg);
+            return;
+        }
+    };
     let test_set_copy = copy_vec(&test_set);
     let y = interpolator::create_polynom(test_set);
-    for i in 1..10 {
-        println!("{}", y(i as f64));
+    match plotter::draw_chart(selected_func, y, test_set_copy, a as f32, b as f32) {
+        Ok(_) => (),
+        Err(_) => {
+            println!("Error while plotting has been occurred");
+        }
     }
-    plotter::draw_chart(selected_func, y, test_set_copy, 1f32, 10f32);
+    println!("Check out.png to see chart");
 }
 
 pub fn copy_vec<T: Clone>(vec: &[T]) -> Vec<T> {

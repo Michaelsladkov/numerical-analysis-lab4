@@ -5,31 +5,55 @@ pub type PointSet = Vec<Point>;
 
 pub enum Clearness {
     CLEAR,
-    NOISY
+    NOISY(f64),
 }
 
-pub fn create_set(fun: fn(f64) -> f64, a: f64, b: f64, steps: u32, clr: Clearness) -> PointSet {
-    create_set_with_info(fun, a, b, steps, clr).0
+pub fn create_set(
+    fun: fn(f64) -> f64,
+    a: f64,
+    b: f64,
+    steps: u32,
+    clr: Clearness,
+) -> Result<PointSet, String> {
+    let ret = create_set_with_info(fun, a, b, steps, clr);
+    match ret {
+        Ok(set_info) => Ok(set_info.0),
+        Err(msg) => Err(msg),
+    }
 }
 
-const NOISE_LEVEL: f64 = 0.01;
-
-pub fn create_set_with_info(fun: fn(f64) -> f64, a: f64, b: f64, steps: u32, clr: Clearness) -> (PointSet, f32, f32) {
+pub fn create_set_with_info(
+    fun: fn(f64) -> f64,
+    a: f64,
+    b: f64,
+    steps: u32,
+    clr: Clearness,
+) -> Result<(PointSet, f32, f32), String> {
     let mut ret: Vec<Point> = Vec::new();
     let mut min = fun(a);
     let mut max = fun(a);
     let step = (b - a) / steps as f64;
     for i in 0..=steps {
         let x = a + i as f64 * step;
-        let y = fun(x);
+        let y: f64 = fun(x);
+        if y.is_nan() {
+            return Err(String::from("Function is undefined on this segment"));
+        }
+        if y.is_infinite() {
+            return Err(String::from("Functions has infinite gap on this segment"));
+        }
         let noise_rand_source: f64 = rand::random();
         let noise = match clr {
             Clearness::CLEAR => 0.0,
-            Clearness::NOISY => (noise_rand_source - 0.5) * 2.0 * NOISE_LEVEL * y,
+            Clearness::NOISY(level) => (noise_rand_source - 0.5) * 2.0 * level * y,
         };
         ret.push((x, y + noise));
-        if y + noise > max {max = y + noise};
-        if y + noise < min {min = y + noise};
+        if y + noise > max {
+            max = y + noise
+        };
+        if y + noise < min {
+            min = y + noise
+        };
     }
-    (ret, min as f32, max as f32)
+    Ok((ret, min as f32, max as f32))
 }
