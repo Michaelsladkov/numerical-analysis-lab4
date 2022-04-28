@@ -1,15 +1,4 @@
-pub type Point = (f64, f64);
-pub type PointSet = Vec<Point>;
-
-pub fn create_set(fun: fn(f64) -> f64, a: f64, b: f64, steps: u32) -> PointSet {
-    let mut ret: Vec<Point> = Vec::new();
-    let step = (b - a) / steps as f64;
-    for i in 0..=steps {
-        let x = a + i as f64 * step;
-        ret.push((x, fun(x)));
-    }
-    ret
-}
+use crate::points::PointSet;
 
 pub fn create_polynom(set: PointSet) -> Box<dyn Fn(f64) -> f64> {
     let mut lagrange_denominators: Vec<f64> = Vec::new();

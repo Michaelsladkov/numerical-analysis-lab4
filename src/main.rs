@@ -1,9 +1,13 @@
-pub mod my_io; 
 pub mod interpolator;
+pub mod points;
+pub mod my_io;
+pub mod plotter;
 
-use interpolator::Point;
+use points::Point;
+use std::env;
 
 fn main() {
+    env::set_var("RUST_BACKTRACE", "1");
     let mut funcs: Vec<(fn(f64) -> f64, &str)> = Vec::new();
     funcs.push((|x| x * x + 5f64, "y = x^2 + 5"));
     funcs.push((|x| -x * x + 9f64, "y = -x^2 + 9"));
@@ -26,8 +30,15 @@ fn main() {
     test_set.push((0f64, 0f64));
     test_set.push((1f64, 1f64));
     test_set.push((2f64, 4f64));
+    let test_set = points::create_set(selected_func.0, 0f64, 10f64, 10);
+    let test_set_copy = copy_vec(&test_set);
     let y = interpolator::create_polynom(test_set);
     for i in 1..10 {
         println!("{}", y(i as f64));
     }
+    plotter::draw_chart(selected_func, y, test_set_copy, 1f32, 10f32);
+}
+
+pub fn copy_vec<T: Clone>(vec: &[T]) -> Vec<T> {
+    vec.to_vec().to_owned()
 }
