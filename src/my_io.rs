@@ -31,7 +31,9 @@ pub fn get_double() -> f64 {
 
 pub fn get_line() -> String {
     let mut input_string = String::new();
-    std::io::stdin().read_line(&mut input_string).expect("Failed to read string");
+    std::io::stdin()
+        .read_line(&mut input_string)
+        .expect("Failed to read string");
     input_string
 }
 
