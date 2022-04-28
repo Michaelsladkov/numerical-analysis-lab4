@@ -4,6 +4,7 @@ pub mod my_io;
 pub mod plotter;
 
 use points::Point;
+use points::Clearness::NOISY;
 use std::env;
 
 fn main() {
@@ -30,7 +31,7 @@ fn main() {
     test_set.push((0f64, 0f64));
     test_set.push((1f64, 1f64));
     test_set.push((2f64, 4f64));
-    let test_set = points::create_set(selected_func.0, 0f64, 10f64, 10);
+    let test_set = points::create_set(selected_func.0, 0f64, 10f64, 10, NOISY);
     let test_set_copy = copy_vec(&test_set);
     let y = interpolator::create_polynom(test_set);
     for i in 1..10 {
